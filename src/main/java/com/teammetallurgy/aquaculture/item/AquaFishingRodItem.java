@@ -6,7 +6,6 @@ import com.teammetallurgy.aquaculture.api.fishing.Hooks;
 import com.teammetallurgy.aquaculture.entity.AquaFishingBobberEntity;
 import com.teammetallurgy.aquaculture.misc.AquaConfig;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -23,11 +22,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.common.capabilities.Capabilities;
-import net.neoforged.neoforge.common.capabilities.Capability;
-import net.neoforged.neoforge.common.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.common.util.LazyOptional;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import javax.annotation.Nonnull;
@@ -65,7 +60,8 @@ public class AquaFishingRodItem extends FishingRodItem {
         boolean isAdminRod = AquaConfig.BASIC_OPTIONS.debugMode.get() && this.tier == AquacultureAPI.MATS.NEPTUNIUM;
         int lureSpeed;
         int damage = this.getDamage(heldStack);
-        if (damage >= this.getMaxDamage(heldStack)) return new InteractionResultHolder<>(InteractionResult.FAIL, heldStack);
+        if (damage >= this.getMaxDamage(heldStack))
+            return new InteractionResultHolder<>(InteractionResult.FAIL, heldStack);
         Hook hook = getHookType(heldStack);
         if (player.fishing != null) {
             if (!level.isClientSide) {
@@ -118,12 +114,17 @@ public class AquaFishingRodItem extends FishingRodItem {
     @Nonnull
     public static Hook getHookType(@Nonnull ItemStack fishingRod) {
         Hook hook = Hooks.EMPTY;
-        ItemStackHandler rodHandler = (ItemStackHandler) fishingRod.getCapability(Capabilities.ITEM_HANDLER).orElse(AquaFishingRodItem.FishingRodEquipmentHandler.EMPTY.getItems());
-        if (!fishingRod.isEmpty() && fishingRod.hasTag() && fishingRod.getTag() != null && fishingRod.getTag().contains("Inventory")) {
-            rodHandler.deserializeNBT(fishingRod.getTag().getCompound("Inventory")); //Reload
-        }
+        /*ItemStackHandler rodHandler = (ItemStackHandler) fishingRod.getCapability(Capabilities.ItemHandler.ITEM);
+        if (rodHandler != null) {
+            if (!fishingRod.isEmpty() && fishingRod.hasTag() && fishingRod.getTag() != null && fishingRod.getTag().contains("Inventory")) {
+                rodHandler.deserializeNBT(fishingRod.getTag().getCompound("Inventory")); //Reload
+                if (!fishingRod.isEmpty() && fishingRod.hasTag() && fishingRod.getTag() != null) {
+                    rodHandler.deserializeNBT(fishingRod.getTag()); //Reload
+                }
+            }
+        }*/
 
-        ItemStack hookStack = rodHandler.getStackInSlot(0);
+        ItemStack hookStack = getHandler(fishingRod).getStackInSlot(0);
         if (hookStack.getItem() instanceof HookItem) {
             hook = ((HookItem) hookStack.getItem()).getHookType();
         }
@@ -146,17 +147,15 @@ public class AquaFishingRodItem extends FishingRodItem {
     }
 
     public static ItemStackHandler getHandler(@Nonnull ItemStack fishingRod) {
-        ItemStackHandler rodHandler = (ItemStackHandler) fishingRod.getCapability(Capabilities.ITEM_HANDLER).orElse(AquaFishingRodItem.FishingRodEquipmentHandler.EMPTY.getItems());
-        if (!fishingRod.isEmpty() && fishingRod.hasTag() && fishingRod.getTag() != null && fishingRod.getTag().contains("Inventory")) {
-            rodHandler.deserializeNBT(fishingRod.getTag().getCompound("Inventory")); //Reload
+        ItemStackHandler rodHandler = (ItemStackHandler) fishingRod.getCapability(Capabilities.ItemHandler.ITEM);
+        if (rodHandler == null) {
+            rodHandler = FishingRodEquipmentHandler.EMPTY;
+        } else {
+            if (!fishingRod.isEmpty() && fishingRod.hasTag() && fishingRod.getTag() != null && fishingRod.getTag().contains("Inventory")) {
+                rodHandler.deserializeNBT(fishingRod.getTag().getCompound("Inventory")); //Reload
+            }
         }
         return rodHandler;
-    }
-
-    @Override
-    @Nullable
-    public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable CompoundTag nbt) {
-        return new FishingRodEquipmentHandler(stack);
     }
 
     @Override
@@ -175,49 +174,36 @@ public class AquaFishingRodItem extends FishingRodItem {
         super.appendHoverText(stack, level, tooltips, tooltipFlag);
     }
 
-    public static class FishingRodEquipmentHandler implements ICapabilityProvider {
+    public static class FishingRodEquipmentHandler extends ItemStackHandler {
         public static final FishingRodEquipmentHandler EMPTY = new FishingRodEquipmentHandler(ItemStack.EMPTY);
-        private final LazyOptional<IItemHandler> holder = LazyOptional.of(this::getItems);
         private final ItemStack stack;
-        private final ItemStackHandler items = new ItemStackHandler(4) {
-            @Override
-            public int getSlotLimit(int slot) {
-                return 1;
-            }
 
-            @Override
-            public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
-                return switch (slot) {
-                    case 0 -> stack.getItem() instanceof HookItem;
-                    case 1 -> stack.getItem() instanceof BaitItem;
-                    case 2 ->
-                            stack.is(AquacultureAPI.Tags.FISHING_LINE) && stack.getItem() instanceof DyeableLeatherItem;
-                    case 3 -> stack.is(AquacultureAPI.Tags.BOBBER) && stack.getItem() instanceof DyeableLeatherItem;
-                    default -> false;
-                };
-            }
-
-            @Override
-            protected void onContentsChanged(int slot) {
-                CompoundTag tag = FishingRodEquipmentHandler.this.stack.getOrCreateTag();
-                tag.put("Inventory", this.serializeNBT());
-                FishingRodEquipmentHandler.this.stack.setTag(tag);
-            }
-        };
-
-        FishingRodEquipmentHandler(@Nonnull ItemStack stack) {
+        public FishingRodEquipmentHandler(ItemStack stack) {
+            super(4);
             this.stack = stack;
         }
 
         @Override
-        @Nonnull
-        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction direction) {
-            return capability == Capabilities.ITEM_HANDLER ? holder.cast() : LazyOptional.empty();
+        public int getSlotLimit(int slot) {
+            return 1;
         }
 
-        @Nonnull
-        public ItemStackHandler getItems() {
-            return items;
+        @Override
+        public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
+            return switch (slot) {
+                case 0 -> stack.getItem() instanceof HookItem;
+                case 1 -> stack.getItem() instanceof BaitItem;
+                case 2 -> stack.is(AquacultureAPI.Tags.FISHING_LINE) && stack.getItem() instanceof DyeableLeatherItem;
+                case 3 -> stack.is(AquacultureAPI.Tags.BOBBER) && stack.getItem() instanceof DyeableLeatherItem;
+                default -> false;
+            };
+        }
+
+        @Override
+        protected void onContentsChanged(int slot) {
+            CompoundTag tag = this.stack.getOrCreateTag();
+            tag.put("Inventory", this.serializeNBT());
+            this.stack.setTag(tag);
         }
     }
 }

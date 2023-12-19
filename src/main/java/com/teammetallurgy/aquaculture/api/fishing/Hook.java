@@ -1,22 +1,18 @@
 package com.teammetallurgy.aquaculture.api.fishing;
 
 import com.teammetallurgy.aquaculture.Aquaculture;
-import com.teammetallurgy.aquaculture.init.AquaItems;
-import com.teammetallurgy.aquaculture.item.HookItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.registries.DeferredItem;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,10 +54,8 @@ public class Hook {
 
     @Nonnull
     public Item getItem() {
-        for (DeferredItem<Item> hookItem : HOOKS.values()) {
-            return hookItem != null ? hookItem.get() : ItemStack.EMPTY.getItem();
-        }
-        return ItemStack.EMPTY.getItem();
+        DeferredItem<Item> hookItem = HOOKS.get(this.getName());
+        return hookItem != null ? hookItem.get() : Items.AIR;
     }
 
     public ResourceLocation getTexture() {

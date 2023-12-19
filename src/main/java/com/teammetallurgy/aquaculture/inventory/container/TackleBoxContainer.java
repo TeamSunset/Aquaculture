@@ -17,7 +17,8 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.DyeableLeatherItem;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.common.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
 import javax.annotation.Nonnull;
@@ -34,18 +35,20 @@ public class TackleBoxContainer extends AbstractContainerMenu {
 
     public TackleBoxContainer(int windowID, BlockPos pos, Inventory playerInventory) {
         super(AquaGuis.TACKLE_BOX.get(), windowID);
-        this.tackleBox = (TackleBoxBlockEntity) playerInventory.player.level().getBlockEntity(pos);
+        Player player = playerInventory.player;
+        this.tackleBox = (TackleBoxBlockEntity) player.level().getBlockEntity(pos);
         if (this.tackleBox != null) {
-            this.tackleBox.startOpen(playerInventory.player);
-            this.tackleBox.getCapability(Capabilities.ITEM_HANDLER).ifPresent(handler -> {
-                SlotFishingRod fishingRod = (SlotFishingRod) addSlot(new SlotFishingRod(handler, 0, 117, 21));
-                this.slotHook = this.addSlot(new SlotHidable(fishingRod, 0, 106, 44) {
+            this.tackleBox.startOpen(player);
+            IItemHandler tackleBoxCapability = player.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+            if (tackleBoxCapability != null) {
+                SlotFishingRod fishingRodSlot = (SlotFishingRod) addSlot(new SlotFishingRod(tackleBoxCapability, 0, 117, 21));
+                this.slotHook = this.addSlot(new SlotHidable(fishingRodSlot, 0, 106, 44) {
                     @Override
                     public boolean mayPlace(@Nonnull ItemStack stack) {
                         return stack.getItem() instanceof HookItem && super.mayPlace(stack);
                     }
                 });
-                this.slotBait = this.addSlot(new SlotHidable(fishingRod, 1, 129, 44) {
+                this.slotBait = this.addSlot(new SlotHidable(fishingRodSlot, 1, 129, 44) {
                     @Override
                     public boolean mayPlace(@Nonnull ItemStack stack) {
                         return stack.getItem() instanceof BaitItem && super.mayPlace(stack);
@@ -56,33 +59,33 @@ public class TackleBoxContainer extends AbstractContainerMenu {
                         return false;
                     }
                 });
-                this.slotLine = this.addSlot(new SlotHidable(fishingRod, 2, 106, 67) {
+                this.slotLine = this.addSlot(new SlotHidable(fishingRodSlot, 2, 106, 67) {
                     @Override
                     public boolean mayPlace(@Nonnull ItemStack stack) {
                         boolean isDyeable = stack.getItem() instanceof DyeableLeatherItem;
                         return stack.is(AquacultureAPI.Tags.FISHING_LINE) && isDyeable && super.mayPlace(stack);
                     }
                 });
-                this.slotBobber = this.addSlot(new SlotHidable(fishingRod, 3, 129, 67) {
+                this.slotBobber = this.addSlot(new SlotHidable(fishingRodSlot, 3, 129, 67) {
                     @Override
                     public boolean mayPlace(@Nonnull ItemStack stack) {
                         boolean isDyeable = stack.getItem() instanceof DyeableLeatherItem;
                         return stack.is(AquacultureAPI.Tags.BOBBER) && isDyeable && super.mayPlace(stack);
                     }
                 });
+            }
 
-                //Tackle Box
-                for (int column = 0; column < collumns; ++column) {
-                    for (int row = 0; row < rows; ++row) {
-                        this.addSlot(new SlotItemHandler(handler, 1 + row + column * collumns, 8 + row * 18, 8 + column * 18) {
-                            @Override
-                            public boolean mayPlace(@Nonnull ItemStack stack) {
-                                return TackleBoxBlockEntity.canBePutInTackleBox(stack);
-                            }
-                        });
-                    }
+            //Tackle Box
+            for (int column = 0; column < collumns; ++column) {
+                for (int row = 0; row < rows; ++row) {
+                    this.addSlot(new SlotItemHandler(tackleBoxCapability, 1 + row + column * collumns, 8 + row * 18, 8 + column * 18) {
+                        @Override
+                        public boolean mayPlace(@Nonnull ItemStack stack) {
+                            return TackleBoxBlockEntity.canBePutInTackleBox(stack);
+                        }
+                    });
                 }
-            });
+            }
 
             for (int column = 0; column < 3; ++column) {
                 for (int row = 0; row < 9; ++row) {

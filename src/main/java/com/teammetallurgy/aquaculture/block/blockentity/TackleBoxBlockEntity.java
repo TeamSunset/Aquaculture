@@ -64,7 +64,7 @@ public class TackleBoxBlockEntity extends IItemHandlerBEBase implements MenuProv
             @Override
             protected void onContentsChanged(int slot) {
                 super.onContentsChanged(slot);
-                setChanged();
+                TackleBoxBlockEntity.this.setChanged();
             }
 
             @Override
@@ -89,7 +89,7 @@ public class TackleBoxBlockEntity extends IItemHandlerBEBase implements MenuProv
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int windowID, @Nonnull Inventory playerInventory, @Nonnull Player player) {
-        return new TackleBoxContainer(windowID, worldPosition, playerInventory);
+        return new TackleBoxContainer(windowID, this.worldPosition, playerInventory);
     }
 
     public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, TackleBoxBlockEntity tackleBox) {

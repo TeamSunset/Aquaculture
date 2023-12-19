@@ -1,6 +1,5 @@
 package com.teammetallurgy.aquaculture.client.gui.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.teammetallurgy.aquaculture.Aquaculture;
 import com.teammetallurgy.aquaculture.inventory.container.TackleBoxContainer;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,26 +20,23 @@ public class TackleBoxScreen extends AbstractContainerScreen<TackleBoxContainer>
 
     @Override
     public void render(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
     protected void renderLabels(@Nonnull GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawString(this.font, this.title, 100, 6, 4210752);
-        guiGraphics.drawString(this.font, this.playerInventoryTitle, 8, (this.imageHeight - 96 + 4), 4210752);
+        guiGraphics.drawString(this.font, this.title, 100, 6, 4210752, false);
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, 8, (this.imageHeight - 96 + 4), 4210752, false);
     }
 
     @Override
     protected void renderBg(@Nonnull GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
         guiGraphics.blit(TACKLE_BOX_GUI, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        if (this.menu.slotHook.isActive()) { //Only checking one slot, since they're all disabled at the same time
+        if (this.menu.slotHook != null && this.menu.slotHook.isActive()) { //Only checking one slot, since they're all disabled at the same time
             if (this.menu.slotHook.hasItem()) {
                 this.renderEmptySlot(TACKLE_BOX_GUI, x + 105, y + 43, guiGraphics);
             } else {
