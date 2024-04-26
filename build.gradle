@@ -100,13 +100,9 @@ publishing {
         from components.java
         artifact sourceJar
         pom {
-            pom.withXml {
-                var dependenciesNode = asNode().dependencies
-                if (dependenciesNode.size() > 0) {
-                    dependenciesNode.dependency.each {
-                        it.remove(it)
-                    }
-                }
+            withXml {
+                NodeList dependenciesList = asNode().get("dependencies")
+                dependenciesList.forEach {asNode().remove(it)}
             }
         }
     }
