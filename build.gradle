@@ -7,15 +7,15 @@ plugins {
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
-  maven {
-    name = "JEI maven"
-    url = "https://dvs1.progwml6.com/files/maven/"
-  }
-  maven { 
-    name = "CraftTweaker2"
-    url = "https://maven.blamejared.com" 
-  }
-  flatDir { dirs 'deps' }
+    maven {
+        name = "JEI maven"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+    maven {
+        name = "CraftTweaker2"
+        url = "https://maven.blamejared.com"
+    }
+    flatDir { dirs 'deps' }
 }
 
 version = "${minecraft_version}-${mod_version}" + getBuildNumber()
@@ -27,15 +27,15 @@ base {
 
 minecraft {
     mappings channel: 'official', version: project.minecraft_version
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-	enableIdeaPrepareRuns = true
-	copyIdeResources = true
-	generateRunFolders = true
-	
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    enableIdeaPrepareRuns = true
+    copyIdeResources = true
+    generateRunFolders = true
+
     runs {
         client {
             workingDirectory project.file('run')
-			
+
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -88,33 +88,32 @@ processResources {
     }
 }
 
-task apiJar(type: Jar) {
-	from sourceSets.main.allSource
-	from sourceSets.main.output
-    include 'com/teammetallurgy/aquaculture/api/**/*'
-    archiveClassifier = 'api'
+tasks.register('sourceJar', Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
 }
 
 publishing {
     tasks.publish.dependsOn 'build'
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId "aquaculture2_${minecraft_version}"
-            artifact jar
-			artifact apiJar
-        }
-    }
-    repositories {
-        if (project.hasProperty('maven_repo')) {
-            maven { url maven_repo }
-        } else {
-            mavenLocal()
+    publications.create("mavenPublish",MavenPublication){
+        artifactId "aquaculture2_${minecraft_version}"
+        from components.java
+        artifact sourceJar
+        pom {
+            pom.withXml {
+                var dependenciesNode = asNode().dependencies
+                if (dependenciesNode.size() > 0) {
+                    dependenciesNode.dependency.each {
+                        it.remove(it)
+                    }
+                }
+            }
         }
     }
 }
 
-artifacts {
-    archives apiJar
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
 }
 
 String getBuildNumber() {
