@@ -101,8 +101,7 @@ publishing {
         artifact sourceJar
         pom {
             withXml {
-                NodeList dependenciesList = asNode().get("dependencies")
-                dependenciesList.forEach {asNode().remove(it)}
+                (asNode().get("dependencies") as NodeList).forEach {asNode().remove(it as Node)}
             }
         }
     }
