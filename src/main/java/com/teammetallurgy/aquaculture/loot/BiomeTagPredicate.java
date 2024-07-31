@@ -92,7 +92,7 @@ public class BiomeTagPredicate {
             if (and) {
                 for (TagKey<Biome> tagKey : includeList) {
                     getBiomeFromTag(biomeRegistry, tagKey).forEach(a -> {
-                        List<TagKey<Biome>> tags = a.getTagKeys().collect(Collectors.toList());
+                        List<TagKey<Biome>> tags = a.tags().collect(Collectors.toList());
                         int beforeTagCount = tags.size();
                         tags.removeAll(includeList);
                         int afterTagCount = tags.size();
