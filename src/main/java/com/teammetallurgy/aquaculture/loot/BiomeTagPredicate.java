@@ -61,11 +61,11 @@ public class BiomeTagPredicate {
                     if (biomeHolder.isPresent()) {
                         CheckType checkType = CheckType.getOrCreate(this.include, this.exclude, this.and);
 
-                        Set<Holder<Biome>> validBiomes = CACHE.get(checkType);
-                        if (validBiomes == null) {
-                            validBiomes = getValidBiomes(serverLevel, checkType);
-                            CACHE.put(checkType, validBiomes);
-                        }
+                        Set<Holder<Biome>> validBiomes = getValidBiomes(serverLevel, checkType);
+//                        if (validBiomes == null) {
+//                            validBiomes = getValidBiomes(serverLevel, checkType);
+//                            CACHE.put(checkType, validBiomes);
+//                        }
                         return validBiomes.contains(biomeHolder.get());
                     }
                 }
